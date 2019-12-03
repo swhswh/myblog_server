@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.doubles.myblog_server.mapper.CategoryMapper">
+
+    <!-- 查询所有分类 -->
+    <select id="listCategory" parameterType="Map" resultType="com.doubles.myblog_server.entity.Category">
+        select
+            t.*,s.name as parentName
+        from
+            category t
+        left join
+            category s
+        on
+            t.type_id = s.id
+    </select>
+</mapper>

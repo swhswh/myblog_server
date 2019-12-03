@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.doubles.myblog_server.mapper.UserMapper">
+    <!-- 按用户账号查询用户 -->
+    <select id="getUserByAccount" resultType="com.doubles.myblog_server.entity.User">
+		select
+			*
+		from
+			user
+		where
+		    account = #{params}
+	</select>
+
+	<!-- 按linkId查询User列表 -->
+	<select id="listByLinkId" resultType="com.doubles.myblog_server.entity.User">
+		select
+			user.*
+		from
+			user
+		left join
+			user_link
+		on
+			user.id=user_link.user_id
+		<where>
+			<if test="linkId != null">
+				and user_link.link_id = #{linkId}
+			</if>
+		</where>
+	</select>
+</mapper>

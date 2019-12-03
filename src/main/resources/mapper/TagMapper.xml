@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.doubles.myblog_server.mapper.TagMapper">
+
+    <!-- 按linkId删除多对多关联 -->
+    <delete id="deleteTagLink">
+        delete
+        from
+            tag_link
+        where
+            tag_link.link_id = #{linkId}
+        and
+            tag_link.type_id = #{typeId}
+    </delete>
+
+    <!-- 按linkId查询Tag列表 -->
+    <select id="listByLinkId" resultType="com.doubles.myblog_server.entity.tag.Tag">
+        select
+            tag.*
+        from
+            tag
+        left join
+            tag_link
+        on
+            tag.id=tag_link.tag_id
+        <where>
+            <if test="linkId!=null">
+                and tag_link.link_id = #{linkId}
+            </if>
+            <if test="typeId!=null">
+                and tag.type_id = #{typeId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 获取tagVoList -->
+    <select id="listTagVo" resultType="com.doubles.myblog_server.entity.tag.TagVO">
+        select
+            t.name ,sum(t.num) as linkNum
+        from (
+            select distinct
+                t.type_id, t.name, (
+                    select
+                        count(*)
+                    from
+                        tag_link tl2
+                    where
+                        tl2.tag_id = t.id
+                ) as num
+            from
+                tag t
+            left join
+                tag_link tl
+            on
+                t.id = tl.tag_id
+            and
+                t.type_id = tl.type_id
+            )
+            t
+        group by t.name
+    </select>
+</mapper>

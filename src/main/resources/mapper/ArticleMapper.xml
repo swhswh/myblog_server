@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.doubles.myblog_server.mapper.ArticleMapper" >
+    <!-- 通用查询映射 -->
+    <resultMap id="BaseResultMap" type="com.doubles.myblog_server.entity.article.Article">
+        <id column="id" property="id" />
+        <result column="title" property="title" />
+        <result column="description" property="description" />
+        <result column="user_id" property="userId" />
+        <result column="content" property="content" />
+        <result column="content_html" property="contentHtml" />
+        <result column="cover" property="cover" />
+        <result column="hit_num" property="hitNum" />
+        <result column="comment_num" property="commentNum" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="publish" property="publish" />
+        <result column="remove" property="remove" />
+        <result column="top" property="top" />
+        <result column="category_id" property="categoryId" />
+        <result column="type_id" property="typeId" />
+    </resultMap>
+
+    <!-- 带标签查询映射 -->
+    <resultMap id="WithTagList" type="com.doubles.myblog_server.entity.article.ArticleVO" extends="BaseResultMap">
+        <association property="tagList" column="{linkId=id, typeId=type_id}" select="com.doubles.myblog_server.mapper.TagMapper.listByLinkId"/>
+    </resultMap>
+    <!-- 通用sql -->
+    <sql id="article_column">
+        article.id,
+        article.title,
+        article.description,
+        article.cover,
+        article.hit_num,
+        article.comment_num,
+        article.create_time,
+        article.top,
+        article.publish,
+        article.remove,
+        article.category_id,
+        article.type_id
+	</sql>
+
+    <!-- 查询置顶文章列表 -->
+    <select id="listTopArticleVo" resultType="com.doubles.myblog_server.entity.article.ArticleVO">
+        select
+            id,
+            title,
+            cover,
+            create_time,
+            category_id
+        from article
+        where
+            top = 2
+        and
+            publish = 1
+        and
+            remove = 0
+        order by create_time desc
+    </select>
+    
+    <select id="listArchiveArticleVo" resultType="com.doubles.myblog_server.entity.article.ArticleVO">
+        select
+            id,
+            title,
+            create_time
+        from article
+        where
+            publish = 1
+        and
+            remove = 0
+        order by create_time desc
+    </select>
+
+    <!-- 按条件分页查询文章列表 -->
+    <select id="listArticleVOByQuery" resultType="com.doubles.myblog_server.entity.article.ArticleVO">
+        select
+            article.*
+		from
+			article
+		<if test="params.tagId != null and params.tagId != 0">
+        left join
+            tag_link
+        on
+            tag_link.link_id=article.id
+        </if>
+		<where>
+            remove = 0
+            <if test="params.tagId != null and params.tagId != 0">
+            and
+                tag_link.link_id=article.id
+            and
+                tag_link.type_id=article.type_id
+            and
+                tag_link.tag_id=#{params.tagId}
+            </if>
+            <if test="params.authorId != null and params.authorId != 0">
+                and user_id = #{params.authorId}
+            </if>
+            <if test="params.publish != null and params.publish != 0">
+			and publish = #{params.publish}
+            </if>
+            <if test="params.top != null and params.top != 0">
+            and top = #{params.top}
+            </if>
+            <if test="params.categoryId != null and params.categoryId != 0">
+            and find_in_set(#{params.categoryId},article.category_id)
+            </if>
+        </where>
+		order by
+			article.create_time desc
+    </select>
+
+    <!-- 按ID查询文章 -->
+    <select id="getArticleVOById" resultMap="WithTagList">
+        select
+            article.*
+        from
+            article
+        where
+            article.id = #{id}
+        and
+            article.publish = 1
+        and
+            article.remove = 0
+    </select>
+
+    <!-- 批量删除文章 -->
+    <update id="deleteBatch">
+        update
+            article
+        set
+            remove = 1
+        where
+            id = #{id}
+    </update>
+    <!-- 更新点击数 -->
+    <update id="updateHitNum">
+        update
+            article
+        set
+            hit_num = hit_num + 1
+        where
+            id = #{id}
+    </update>
+
+    <!-- 更新评论数 -->
+    <update id="updateCommentNum">
+        update
+            article
+        set
+            comment_num = comment_num + 1
+        where
+            id = #{id}
+    </update>
+
+    <!-- 分类检查 -->
+    <select id="checkByCategory" resultType="Integer">
+        select
+            count(*)
+        from
+            article
+        where
+            category_id = #{categoryId}
+    </select>
+
+
+</mapper>
